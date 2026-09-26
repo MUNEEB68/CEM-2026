@@ -1,6 +1,6 @@
 """
 Difficulty-aware model switching for wearable health monitoring
-over a smartphone - LAP - LEO edge.
+over a smartphone - edge-server hierarchy.
 
 Schemes
   proposed   : M1 screens every task; hard cases go to M2 (phone) or M3 (LAP),
@@ -64,10 +64,6 @@ BANDWIDTH = 1e6
 SNR_DB = 15.0
 UPLINK_RATE = BANDWIDTH * np.log2(1 + 10 ** (SNR_DB / 10))   # bit/s
 
-# ---- LEO record path (delay tolerant, but not free) ----
-LEO_RATE = 2e6
-LEO_TX_POWER = 0.50
-
 # ---- sensors ----
 SENSORS = {
     "ECG":   dict(rate=2.0, bits=4096, crit=0.90, hard=0.40),
@@ -108,7 +104,6 @@ def t_lap(m):     return MODELS[m]["flops"] / LAP_FLOPS / (1.0 - LAP_BG_UTIL)
 def e_lap(m):     return MODELS[m]["flops"] / LAP_EFF
 def t_uplink(b):  return b / UPLINK_RATE
 def e_uplink(b):  return PHONE_TX_POWER * t_uplink(b)
-def e_leo(b):     return LEO_TX_POWER * b / LEO_RATE
 
 
 # ----------------------------------------------------------------------
@@ -271,8 +266,9 @@ class Sim:
         if serious:                                  # alarm, straight out
             yield self.env.timeout(t_uplink(256))
             self.spend(u, e_uplink(256), tx=True)
-        else:                                        # record, next LEO window
-            self.spend(u, e_leo(SENSORS[name]["bits"]), tx=True)
+        else:                                        # archival record to the cloud
+            # same radio as everything else; delay-tolerant so timing is ignored
+            self.spend(u, e_uplink(SENSORS[name]["bits"]), tx=True)
             yield self.env.timeout(0.0)              # not deadline-bound
         lat = self.env.now - t0
         self.lat[prio].append(lat)
