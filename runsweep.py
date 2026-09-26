@@ -3,7 +3,7 @@ import json, sys, numpy as np
 from sim import run, SENSORS, N_USERS
 
 SCHEMES = ["proposed", "cascade", "big_lap", "big_phone"]
-KEYS = ("ee", "e_task", "e_phone_task", "acc", "timely_acc", "lat_mean",
+KEYS = ("ee", "e_task", "e_phone_task", "acc", "timely_acc", "done", "lat_mean",
         "lat_crit", "miss", "degraded", "m1_share", "m2_share", "m3_share")
 BASE_RATE = sum(s["rate"] for s in SENSORS.values()) * N_USERS
 
