@@ -138,6 +138,7 @@ class Sim:
         self.done = 0
         self.missed = 0
         self.degraded = 0
+        self.easy_stop = 0      # finished at M1 because the case was easy
         self.used = defaultdict(int)
 
         for u in range(N_USERS):
@@ -227,6 +228,7 @@ class Sim:
             self.used["M1"] += 1
             final = "M1"
             if diff < self.th1:
+                self.easy_stop += 1
                 yield self.env.process(
                     self.deliver(u, name, prio, t0, serious, band, final))
                 return
@@ -312,7 +314,9 @@ def run(scheme, load_scale=1.0, crit_frac=0.0, theta_shift=0.0, seed=SEED):
         lat_crit=float(np.mean(sim.lat["critical"])) if sim.lat["critical"] else float("nan"),
         miss=miss_rate,
         degraded=sim.degraded / sim.created if sim.created else 0.0,
-        m1_share=(sim.created - sim.used["M2"] - sim.used["M3"]) / created,
+        # measured directly, so it is not inflated by tasks that never finished
+        m1_share=sim.easy_stop / created,
+        unfinished_share=unfinished / created,
         m2_share=sim.used["M2"] / created, m3_share=sim.used["M3"] / created,
         m1=sim.used["M1"], m2=sim.used["M2"], m3=sim.used["M3"],
     )
